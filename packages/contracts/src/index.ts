@@ -108,3 +108,6 @@ export type NodeData = Static<typeof Node>;
 export type GenerationData = Static<typeof Generation>;
 export type GenerationRequest = Static<typeof GenerationInput>;
 export type SpaceData = Static<typeof Space>;
+
+export type ErrorResponseData = Static<typeof ErrorResponse>;
+export type ConfigData = Static<typeof Config>;
