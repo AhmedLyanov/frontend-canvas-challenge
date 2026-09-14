@@ -111,3 +111,4 @@ export type SpaceData = Static<typeof Space>;
 
 export type ErrorResponseData = Static<typeof ErrorResponse>;
 export type ConfigData = Static<typeof Config>;
+export type SpaceInputData = Static<typeof SpaceInput>;

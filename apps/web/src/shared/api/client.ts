@@ -6,6 +6,11 @@ interface RequestOptions extends RequestInit {
   parseJson?: boolean;
 }
 
+export interface ApiResponse<T> {
+  data: T;
+  headers: Headers;
+}
+
 async function parseError(response: Response): Promise<ApiError> {
   let body: ErrorResponseData | undefined;
 
@@ -21,10 +26,10 @@ async function parseError(response: Response): Promise<ApiError> {
   );
 }
 
-export async function apiRequest<T>(
+export async function apiResponse<T>(
   path: string,
   options: RequestOptions = {},
-): Promise<T> {
+): Promise<ApiResponse<T>> {
   const { parseJson = true, body, ...fetchOptions } = options;
 
   let response: Response;
@@ -50,9 +55,22 @@ export async function apiRequest<T>(
     throw await parseError(response);
   }
 
-  if (!parseJson || response.status === 204) {
-    return undefined as T;
-  }
+  const data =
+    !parseJson || response.status === 204
+      ? undefined
+      : await response.json();
 
-  return (await response.json()) as T;
+  return {
+    data: data as T,
+    headers: response.headers,
+  };
+}
+
+export async function api<T>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<T> {
+  const { data } = await apiResponse<T>(path, options);
+
+  return data;
 }
