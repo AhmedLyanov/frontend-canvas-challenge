@@ -1,11 +1,11 @@
-import type { ErrorResponseData } from "@canvas/contracts";
+import type { ErrorResponseData } from '@canvas/contracts';
 
-import { ApiError } from "./errors";
+import { ApiError } from './errors';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 function buildApiUrl(path: string): string {
-  if (path.startsWith("http")) {
+  if (path.startsWith('http')) {
     return path;
   }
 
@@ -26,12 +26,11 @@ async function parseError(response: Response): Promise<ApiError> {
 
   try {
     body = (await response.json()) as ErrorResponseData;
-  } catch {
-  }
+  } catch {}
 
   return new ApiError(
     response.status,
-    body?.error.code ?? "UNKNOWN_ERROR",
+    body?.error.code ?? 'UNKNOWN_ERROR',
     body?.error.message ?? `Request failed with status ${response.status}`,
   );
 }
@@ -49,26 +48,19 @@ export async function apiResponse<T>(
       ...fetchOptions,
       body,
       headers: {
-        ...(body ? { "Content-Type": "application/json" } : {}),
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
         ...fetchOptions.headers,
       },
     });
   } catch {
-    throw new ApiError(
-      0,
-      "NETWORK_ERROR",
-      "Network request failed",
-    );
+    throw new ApiError(0, 'NETWORK_ERROR', 'Network request failed');
   }
 
   if (!response.ok) {
     throw await parseError(response);
   }
 
-  const data =
-    !parseJson || response.status === 204
-      ? undefined
-      : await response.json();
+  const data = !parseJson || response.status === 204 ? undefined : await response.json();
 
   return {
     data: data as T,
@@ -76,10 +68,7 @@ export async function apiResponse<T>(
   };
 }
 
-export async function api<T>(
-  path: string,
-  options: RequestOptions = {},
-): Promise<T> {
+export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { data } = await apiResponse<T>(path, options);
 
   return data;

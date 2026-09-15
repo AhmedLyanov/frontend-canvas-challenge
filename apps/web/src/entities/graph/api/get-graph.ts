@@ -1,21 +1,19 @@
-import type { GraphData } from "@canvas/contracts";
+import type { GraphData } from '@canvas/contracts';
 
-import { apiResponse } from "@/shared/api/client";
+import { apiResponse } from '@/shared/api/client';
 
 export interface GraphResponse {
   graph: GraphData;
   etag: string;
 }
 
-export async function getGraph(
-  href: string,
-): Promise<GraphResponse> {
+export async function getGraph(href: string): Promise<GraphResponse> {
   const response = await apiResponse<GraphData>(href);
 
-  const etag = response.headers.get("ETag");
+  const etag = response.headers.get('ETag');
 
   if (!etag) {
-    throw new Error("Graph response does not contain ETag");
+    throw new Error('Graph response does not contain ETag');
   }
 
   return {

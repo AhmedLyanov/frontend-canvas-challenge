@@ -1,6 +1,6 @@
-import type { GraphData } from "@canvas/contracts";
+import type { GraphData } from '@canvas/contracts';
 
-import { apiResponse } from "@/shared/api/client";
+import { apiResponse } from '@/shared/api/client';
 
 export interface SaveGraphResponse {
   graph: GraphData;
@@ -13,17 +13,17 @@ export async function saveGraph(
   etag: string,
 ): Promise<SaveGraphResponse> {
   const response = await apiResponse<GraphData>(href, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "If-Match": etag,
+      'If-Match': etag,
     },
     body: JSON.stringify(graph),
   });
 
-  const nextEtag = response.headers.get("ETag");
+  const nextEtag = response.headers.get('ETag');
 
   if (!nextEtag) {
-    throw new Error("Graph response does not contain ETag");
+    throw new Error('Graph response does not contain ETag');
   }
 
   return {

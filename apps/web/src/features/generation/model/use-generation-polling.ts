@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { GenerationData } from "@canvas/contracts";
-import { getGeneration } from "@/entities/generation/api";
+import type { GenerationData } from '@canvas/contracts';
+import { getGeneration } from '@/entities/generation/api';
 
 export interface UseGenerationPollingProps {
   onSucceeded: (generation: GenerationData) => void;
@@ -9,26 +9,21 @@ export interface UseGenerationPollingProps {
 }
 
 interface PollingState {
-  status: "idle" | "processing" | "succeeded" | "failed";
+  status: 'idle' | 'processing' | 'succeeded' | 'failed';
   generation: GenerationData | null;
   error: string | null;
 }
 
 const POLL_INTERVAL_MS = 1500;
 
-export function useGenerationPolling({
-  onSucceeded,
-  onFailed,
-}: UseGenerationPollingProps) {
+export function useGenerationPolling({ onSucceeded, onFailed }: UseGenerationPollingProps) {
   const [state, setState] = useState<PollingState>({
-    status: "idle",
+    status: 'idle',
     generation: null,
     error: null,
   });
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const generationIdRef = useRef<string | null>(null);
 
@@ -42,10 +37,7 @@ export function useGenerationPolling({
   }, []);
 
   const poll = useCallback(
-    async (
-      href: string,
-      generationId: string,
-    ) => {
+    async (href: string, generationId: string) => {
       if (generationIdRef.current !== generationId) {
         return;
       }
@@ -57,9 +49,9 @@ export function useGenerationPolling({
           return;
         }
 
-        if (generation.status === "succeeded") {
+        if (generation.status === 'succeeded') {
           setState({
-            status: "succeeded",
+            status: 'succeeded',
             generation,
             error: null,
           });
@@ -70,9 +62,9 @@ export function useGenerationPolling({
           return;
         }
 
-        if (generation.status === "failed") {
+        if (generation.status === 'failed') {
           setState({
-            status: "failed",
+            status: 'failed',
             generation,
             error: generation.failureCode,
           });
@@ -84,7 +76,7 @@ export function useGenerationPolling({
         }
 
         setState({
-          status: "processing",
+          status: 'processing',
           generation,
           error: null,
         });
@@ -101,10 +93,7 @@ export function useGenerationPolling({
 
         setState((current) => ({
           ...current,
-          error:
-            error instanceof Error
-              ? error.message
-              : "Generation status request failed",
+          error: error instanceof Error ? error.message : 'Generation status request failed',
         }));
 
         timerRef.current = setTimeout(() => {
@@ -118,17 +107,13 @@ export function useGenerationPolling({
   );
 
   const start = useCallback(
-    (
-      href: string,
-      generationId: string,
-      initialDelay = 0,
-    ) => {
+    (href: string, generationId: string, initialDelay = 0) => {
       stop();
 
       generationIdRef.current = generationId;
 
       setState({
-        status: "processing",
+        status: 'processing',
         generation: null,
         error: null,
       });

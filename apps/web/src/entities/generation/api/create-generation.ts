@@ -23,7 +23,7 @@ export async function createGeneration(
 
   const retryAfterHeader = response.headers.get('Retry-After');
   const retryAfter = retryAfterHeader ? Number(retryAfterHeader) : null;
-  
+
   return {
     generation: response.data,
     location: response.headers.get('Location'),

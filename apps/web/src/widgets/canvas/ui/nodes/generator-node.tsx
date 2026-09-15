@@ -11,19 +11,21 @@ export function GeneratorNode({ data, id }: NodeProps<CanvasNode>) {
   const { generate } = useCanvasContext();
 
   return (
-    <div className="relative w-56 rounded-lg border bg-white p-4 shadow-sm">
+    <div className="relative w-56 rounded-lg border border-border-subtle bg-surface-raised p-4 shadow-sm">
       <Handle type="target" position={Position.Left} aria-label="Generator input" />
 
-      <div className="font-medium">{data.label}</div>
+      <div className="font-medium text-content-primary">{data.label}</div>
 
-      <div className="mt-1 text-sm text-gray-500">Image generator</div>
+      <div className="mt-1 text-sm text-content-muted">Image generator</div>
+
       <button
         type="button"
         onClick={() => generate(id)}
-        className="mt-4 w-full rounded-md bg-black px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+        className="mt-4 w-full rounded-md bg-surface-inverse px-3 py-2 text-sm font-medium text-content-inverse transition-colors hover:bg-surface-inverse-hover"
       >
         Generate
       </button>
+
       <Handle type="source" position={Position.Right} aria-label="Generator output" />
     </div>
   );

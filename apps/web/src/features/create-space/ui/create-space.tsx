@@ -17,9 +17,7 @@ export function CreateSpace() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-content-secondary">
-          Название пространства
-        </label>
+        <label className="text-sm font-medium text-content-secondary">Название пространства</label>
 
         <input
           value={title}

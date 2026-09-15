@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import type { SpaceData } from "@canvas/contracts";
-import { listSpaces } from "@/entities/space/api";
+import type { SpaceData } from '@canvas/contracts';
+import { listSpaces } from '@/entities/space/api';
 
 export function SpacesList() {
   const [spaces, setSpaces] = useState<SpaceData[]>([]);
@@ -13,7 +13,7 @@ export function SpacesList() {
   useEffect(() => {
     async function loadSpaces() {
       try {
-        const data = await listSpaces("/api/spaces");
+        const data = await listSpaces('/api/spaces');
 
         setSpaces(data);
       } finally {
@@ -25,19 +25,11 @@ export function SpacesList() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="text-sm text-content-muted">
-        Загрузка пространств...
-      </div>
-    );
+    return <div className="text-sm text-content-muted">Загрузка пространств...</div>;
   }
 
   if (spaces.length === 0) {
-    return (
-      <div className="text-sm text-content-muted">
-        Пока нет созданных пространств
-      </div>
-    );
+    return <div className="text-sm text-content-muted">Пока нет созданных пространств</div>;
   }
 
   return (
@@ -49,13 +41,9 @@ export function SpacesList() {
           onClick={() => navigate(`/spaces/${space.id}`)}
           className="flex w-full items-center justify-between rounded-lg border border-border-subtle bg-surface-raised px-4 py-3 text-left transition-colors hover:border-border-strong hover:bg-surface-overlay"
         >
-          <span className="font-medium text-content-primary">
-            {space.title}
-          </span>
+          <span className="font-medium text-content-primary">{space.title}</span>
 
-          <span className="text-xs text-content-muted">
-            Открыть
-          </span>
+          <span className="text-xs text-content-muted">Открыть</span>
         </button>
       ))}
     </div>

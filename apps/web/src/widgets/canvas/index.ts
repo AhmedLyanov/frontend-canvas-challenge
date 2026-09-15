@@ -1,7 +1,3 @@
-export {
-  GeneratorNode,
-  PromptNode,
-  ResultNode,
-} from "./ui/nodes";
+export { GeneratorNode, PromptNode, ResultNode } from './ui/nodes';
 
-export { Canvas } from "./ui/canvas";
+export { Canvas } from './ui/canvas';

@@ -1,23 +1,25 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 @theme {
-    --color-surface-base: rgb(9 9 11);
-    --color-surface-raised: rgb(24 24 27);
-    --color-surface-overlay: rgb(39 39 42);
-    --color-surface-inverse: rgb(255 255 255);
-    --color-surface-inverse-hover: rgb(228 228 231);
+  --color-surface-base: rgb(9 9 11);
+  --color-surface-raised: rgb(24 24 27);
+  --color-surface-overlay: rgb(39 39 42);
+  --color-surface-inverse: rgb(255 255 255);
+  --color-surface-inverse-hover: rgb(228 228 231);
 
-    --color-border-subtle: rgb(39 39 42);
-    --color-border-strong: rgb(63 63 70);
-    --color-border-focus: rgb(82 82 91);
+  --color-border-subtle: rgb(39 39 42);
+  --color-border-strong: rgb(63 63 70);
+  --color-border-focus: rgb(82 82 91);
 
-    --color-content-primary: rgb(255 255 255);
-    --color-content-inverse: rgb(9 9 11);
-    --color-content-secondary: rgb(161 161 170);
-    --color-content-muted: rgb(113 113 122);
-    --color-content-disabled: rgb(82 82 91);
+  --color-content-primary: rgb(255 255 255);
+  --color-content-inverse: rgb(9 9 11);
+  --color-content-secondary: rgb(161 161 170);
+  --color-content-muted: rgb(113 113 122);
+  --color-content-disabled: rgb(82 82 91);
+
+  --color-danger: rgb(248 113 113);
 }

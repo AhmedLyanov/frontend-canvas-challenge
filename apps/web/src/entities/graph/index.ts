@@ -1,7 +1,4 @@
-export {
-  getGraph,
-  saveGraph,
-} from "./api";
+export { getGraph, saveGraph } from './api';
 
 export {
   canConnect,
@@ -14,4 +11,4 @@ export {
   type CanvasEdge,
   type CanvasNode,
   type CanvasNodeData,
-} from "./model";
+} from './model';

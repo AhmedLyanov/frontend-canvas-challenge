@@ -1,1 +1,1 @@
-export {CreateSpace } from "./ui/create-space"
+export { CreateSpace } from './ui/create-space';

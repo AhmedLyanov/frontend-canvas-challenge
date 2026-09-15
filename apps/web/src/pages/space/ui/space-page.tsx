@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { getGraph, toCanvasEdges, toCanvasNodes } from '@/entities/graph';
+import { listGenerations } from '@/entities/generation/api';
 import { getSpace } from '@/entities/space/api';
 import { useGeneration, useGraphEditor, useGraphPersistence } from '@/features';
 import { Canvas } from '@/widgets/canvas';
@@ -12,9 +13,7 @@ export function SpacePage() {
   const graph = useGraphEditor();
 
   const [graphHref, setGraphHref] = useState<string | null>(null);
-
   const [graphEtag, setGraphEtag] = useState<string | null>(null);
-
   const [generationHref, setGenerationHref] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
@@ -36,6 +35,7 @@ export function SpacePage() {
     generationHref,
     setResultImage: graph.setResultImage,
   });
+
   useEffect(() => {
     if (!spaceId) {
       return;
@@ -52,6 +52,8 @@ export function SpacePage() {
 
         const graphResponse = await getGraph(space.links.graph.href);
 
+        const generations = await listGenerations(space.links.createGeneration.href);
+
         if (cancelled) {
           return;
         }
@@ -63,10 +65,10 @@ export function SpacePage() {
         );
 
         setGraphHref(space.links.saveGraph.href);
-
         setGraphEtag(graphResponse.etag);
-
         setGenerationHref(space.links.createGeneration.href);
+
+        generation.restoreGenerations(generations);
       } catch (error) {
         if (cancelled) {
           return;
@@ -85,22 +87,34 @@ export function SpacePage() {
     return () => {
       cancelled = true;
     };
-  }, [spaceId, graph.setGraph]);
+  }, [spaceId, graph.setGraph, generation.restoreGenerations]);
 
   if (!spaceId) {
-    return <div>Space not found</div>;
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-surface-base text-content-secondary">
+        Space not found
+      </div>
+    );
   }
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-surface-base text-content-secondary">
+        Loading...
+      </div>
+    );
   }
 
   if (error) {
-    return <div>{error}</div>;
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-surface-base text-danger">
+        {error}
+      </div>
+    );
   }
 
   return (
-    <div className="relative h-screen w-screen">
+    <div className="relative h-screen w-screen bg-surface-base">
       <Canvas
         nodes={graph.nodes}
         edges={graph.edges}
@@ -115,18 +129,15 @@ export function SpacePage() {
       />
 
       <div className="pointer-events-none absolute right-4 top-4 z-10">
-        <div className="rounded-md bg-white px-3 py-2 text-sm shadow-sm">
+        <div className="rounded-md border border-border-subtle bg-surface-raised px-3 py-2 text-sm text-content-secondary shadow-sm">
           {persistence.status === 'idle' && 'Ready'}
-
           {persistence.status === 'saving' && 'Saving...'}
-
           {persistence.status === 'saved' && 'Saved'}
-
           {persistence.status === 'error' && 'Save failed'}
         </div>
 
         {persistence.error && (
-          <div className="mt-2 max-w-xs rounded-md bg-white px-3 py-2 text-sm text-red-600 shadow-sm">
+          <div className="mt-2 max-w-xs rounded-md border border-border-subtle bg-surface-raised px-3 py-2 text-sm text-danger shadow-sm">
             {persistence.error}
           </div>
         )}

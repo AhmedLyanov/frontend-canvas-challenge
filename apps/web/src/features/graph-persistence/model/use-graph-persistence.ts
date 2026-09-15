@@ -1,21 +1,11 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type {
-  CanvasEdge,
-  CanvasNode,
-} from '@/entities/graph';
-
+import type { CanvasEdge, CanvasNode } from '@/entities/graph';
+import { toGraphData } from '@/entities/graph';
 import {
   saveGraph,
   type SaveGraphResponse,
 } from '@/entities/graph/api';
-
-import { toGraphData } from '@/entities/graph';
 
 interface UseGraphPersistenceProps {
   href: string | null;
@@ -58,9 +48,9 @@ export function useGraphPersistence({
   const revisionRef = useRef(0);
   const savedRevisionRef = useRef(0);
 
-  const saveChainRef = useRef<
-    Promise<string | undefined>
-  >(Promise.resolve(undefined));
+  const saveChainRef = useRef<Promise<string | undefined>>(
+    Promise.resolve(undefined),
+  );
 
   const initializedRef = useRef(false);
 
@@ -97,17 +87,17 @@ export function useGraphPersistence({
 
       const revision = revisionRef.current;
 
-      saveChainRef.current =
-        saveChainRef.current.then(async () => {
+      saveChainRef.current = saveChainRef.current.then(
+        async () => {
           if (savedRevisionRef.current >= revision) {
-            return;
+            return undefined;
           }
 
           const currentHref = hrefRef.current;
           const currentEtag = etagRef.current;
 
           if (!currentHref || !currentEtag) {
-            return;
+            return undefined;
           }
 
           const graph = latestGraphRef.current;
@@ -137,7 +127,10 @@ export function useGraphPersistence({
                 : 'Failed to save graph',
             );
           }
-        });
+
+          return undefined;
+        },
+      );
     }, 500);
   }, [nodes, edges, viewport, enabled]);
 
@@ -164,8 +157,8 @@ export function useGraphPersistence({
 
       const revision = revisionRef.current;
 
-      saveChainRef.current =
-        saveChainRef.current.then(async () => {
+      saveChainRef.current = saveChainRef.current.then(
+        async () => {
           const currentHref = hrefRef.current;
           const currentEtag = etagRef.current;
 
@@ -177,12 +170,11 @@ export function useGraphPersistence({
           setError(null);
 
           try {
-            const response =
-              await saveGraph(
-                currentHref,
-                latestGraphRef.current,
-                currentEtag,
-              );
+            const response = await saveGraph(
+              currentHref,
+              latestGraphRef.current,
+              currentEtag,
+            );
 
             etagRef.current = response.etag;
 
@@ -202,7 +194,8 @@ export function useGraphPersistence({
 
             throw error;
           }
-        });
+        },
+      );
 
       return saveChainRef.current;
     },

@@ -1,1 +1,1 @@
-export { SpacesList } from "./ui/spaces-list";
+export { SpacesList } from './ui/spaces-list';

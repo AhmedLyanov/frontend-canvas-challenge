@@ -1,0 +1,3 @@
+npm run lint -w @canvas/web
+npm run format
+npm run build -w @canvas/web

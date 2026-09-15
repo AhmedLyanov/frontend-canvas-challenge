@@ -2,9 +2,13 @@ import { useCallback } from 'react';
 
 import type { GenerationData } from '@canvas/contracts';
 
-import { findPromptNode, findResultNode, type CanvasEdge, type CanvasNode } from '@/entities/graph';
+import {
+  findPromptNode,
+  findResultNode,
+  type CanvasEdge,
+  type CanvasNode,
+} from '@/entities/graph';
 import { createGeneration } from '@/entities/generation/api';
-
 import { useGenerationPolling } from './use-generation-polling';
 
 interface UseGenerationProps {
@@ -22,20 +26,19 @@ export function useGeneration({
   generationHref,
   setResultImage,
 }: UseGenerationProps) {
-  
   const handleSucceeded = useCallback(
     (generation: GenerationData) => {
       if (!generation.imageUrl) {
         return;
       }
 
-      setResultImage(generation.resultNodeId, generation.imageUrl);
+      setResultImage(
+        generation.resultNodeId,
+        generation.imageUrl,
+      );
     },
     [setResultImage],
   );
-  const handleFailed = useCallback((generation: GenerationData) => {
-    console.log('Generation failed:', generation);
-  }, []);
 
   const {
     generation,
@@ -45,7 +48,7 @@ export function useGeneration({
     stop: stopPolling,
   } = useGenerationPolling({
     onSucceeded: handleSucceeded,
-    onFailed: handleFailed,
+    onFailed: () => {},
   });
 
   const generate = useCallback(
@@ -54,9 +57,17 @@ export function useGeneration({
         return;
       }
 
-      const promptNode = findPromptNode(nodes, edges, generatorId);
+      const promptNode = findPromptNode(
+        nodes,
+        edges,
+        generatorId,
+      );
 
-      const resultNode = findResultNode(nodes, edges, generatorId);
+      const resultNode = findResultNode(
+        nodes,
+        edges,
+        generatorId,
+      );
 
       if (!promptNode || !resultNode) {
         return;
@@ -90,13 +101,79 @@ export function useGeneration({
         idempotencyKey,
       );
 
-      startPolling(response.generation.links.self.href, response.generation.id);
+      startPolling(
+        response.generation.links.self.href,
+        response.generation.id,
+      );
     },
-    [nodes, edges, saveNow, generationHref, startPolling],
+    [
+      nodes,
+      edges,
+      saveNow,
+      generationHref,
+      startPolling,
+    ],
+  );
+
+  const restoreGeneration = useCallback(
+    (item: GenerationData) => {
+      if (item.status === 'succeeded') {
+        if (item.imageUrl) {
+          setResultImage(
+            item.resultNodeId,
+            item.imageUrl,
+          );
+        }
+
+        return;
+      }
+
+      if (item.status === 'processing') {
+        startPolling(
+          item.links.self.href,
+          item.id,
+        );
+
+        return;
+      }
+
+      if (item.status === 'failed') {
+        return;
+      }
+    },
+    [
+      setResultImage,
+      startPolling,
+    ],
+  );
+
+  const restoreGenerations = useCallback(
+    (generations: GenerationData[]) => {
+      const latestByResultNode = new Map<
+        string,
+        GenerationData
+      >();
+
+      for (const item of generations) {
+        if (!latestByResultNode.has(item.resultNodeId)) {
+          latestByResultNode.set(
+            item.resultNodeId,
+            item,
+          );
+        }
+      }
+
+      for (const item of latestByResultNode.values()) {
+        restoreGeneration(item);
+      }
+    },
+    [restoreGeneration],
   );
 
   return {
     generate,
+    restoreGeneration,
+    restoreGenerations,
     generation,
     generationStatus: status,
     generationError: error,

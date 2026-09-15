@@ -1,12 +1,6 @@
-import type {
-  CanvasEdge,
-  CanvasNode,
-} from "./react-flow-adapter";
+import type { CanvasEdge, CanvasNode } from './react-flow-adapter';
 
-function getNode(
-  nodes: CanvasNode[],
-  id: string,
-): CanvasNode | undefined {
+function getNode(nodes: CanvasNode[], id: string): CanvasNode | undefined {
   for (const node of nodes) {
     if (node.id === id) {
       return node;
@@ -33,16 +27,12 @@ export function canConnect(
     return false;
   }
 
-  if (source.type === "prompt" && target.type === "generator") {
-    return !edges.some(
-      (edge) => edge.target === targetId,
-    );
+  if (source.type === 'prompt' && target.type === 'generator') {
+    return !edges.some((edge) => edge.target === targetId);
   }
 
-  if (source.type === "generator" && target.type === "result") {
-    return !edges.some(
-      (edge) => edge.source === sourceId,
-    );
+  if (source.type === 'generator' && target.type === 'result') {
+    return !edges.some((edge) => edge.source === sourceId);
   }
 
   return false;
@@ -56,15 +46,9 @@ export function removeNode(
   nodes: CanvasNode[];
   edges: CanvasEdge[];
 } {
-  const nextNodes = nodes.filter(
-    (node) => node.id !== nodeId,
-  );
+  const nextNodes = nodes.filter((node) => node.id !== nodeId);
 
-  const nextEdges = edges.filter(
-    (edge) =>
-      edge.source !== nodeId &&
-      edge.target !== nodeId,
-  );
+  const nextEdges = edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId);
 
   return {
     nodes: nextNodes,
@@ -84,7 +68,7 @@ export function findResultNode(
 
     const target = getNode(nodes, edge.target);
 
-    if (target?.type === "result") {
+    if (target?.type === 'result') {
       return target;
     }
   }
@@ -104,7 +88,7 @@ export function findPromptNode(
 
     const source = getNode(nodes, edge.source);
 
-    if (source?.type === "prompt") {
+    if (source?.type === 'prompt') {
       return source;
     }
   }

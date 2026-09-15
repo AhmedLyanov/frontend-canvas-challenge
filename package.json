@@ -22,7 +22,8 @@
     "smoke": "node scripts/smoke.mjs",
     "data:reset": "node scripts/reset.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@apidevtools/swagger-parser": "13.0.0",
