@@ -1,3 +1,7 @@
+import { RouterProvider } from "react-router-dom";
+
+import { router } from "./router/router";
+
 export function App() {
-  return <div>Canvas</div>;
+  return <RouterProvider router={router} />;
 }

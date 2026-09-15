@@ -2,6 +2,16 @@ import type { ErrorResponseData } from "@canvas/contracts";
 
 import { ApiError } from "./errors";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
+function buildApiUrl(path: string): string {
+  if (path.startsWith("http")) {
+    return path;
+  }
+
+  return `${API_URL}${path}`;
+}
+
 interface RequestOptions extends RequestInit {
   parseJson?: boolean;
 }
@@ -35,7 +45,7 @@ export async function apiResponse<T>(
   let response: Response;
 
   try {
-    response = await fetch(path, {
+    response = await fetch(buildApiUrl(path), {
       ...fetchOptions,
       body,
       headers: {
