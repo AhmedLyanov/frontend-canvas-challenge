@@ -10,6 +10,7 @@ interface CanvasContextValue {
     nodeId: string,
     data: CanvasNode['data'],
   ) => void;
+  generate: (generatorId: string) => void;
 }
 
 const CanvasContext =
@@ -18,11 +19,12 @@ const CanvasContext =
 export function CanvasProvider({
   updateNodeData,
   children,
+  generate
 }: CanvasContextValue & {
   children: React.ReactNode;
 }) {
   return (
-    <CanvasContext.Provider value={{ updateNodeData }}>
+    <CanvasContext.Provider value={{ updateNodeData, generate }}>
       {children}
     </CanvasContext.Provider>
   );

@@ -33,6 +33,8 @@ export interface CanvasProps {
   onAddNode: (type: 'prompt' | 'generator' | 'result') => void;
   onUpdateNodeData: (nodeId: string, data: CanvasNode['data']) => void;
   onViewportChange: (viewport: Viewport) => void;
+
+  onGenerate: (generatorId: string) => void;
 }
 
 export function Canvas({
@@ -45,9 +47,10 @@ export function Canvas({
   onAddNode,
   onUpdateNodeData,
   onViewportChange,
+  onGenerate,
 }: CanvasProps) {
   return (
-    <CanvasProvider updateNodeData={onUpdateNodeData}>
+    <CanvasProvider updateNodeData={onUpdateNodeData} generate={onGenerate}>
       <div className="h-full w-full">
         <ReactFlow
           nodes={nodes}

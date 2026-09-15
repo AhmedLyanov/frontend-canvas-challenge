@@ -1,14 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import {
-  getGraph,
-  toCanvasEdges,
-  toCanvasNodes,
-} from '@/entities/graph';
+import { getGraph, toCanvasEdges, toCanvasNodes } from '@/entities/graph';
 import { getSpace } from '@/entities/space/api';
-import { useGraphEditor } from '@/features/graph-editing';
-import { useGraphPersistence } from '@/features/graph-persistence';
+import { useGeneration, useGraphEditor, useGraphPersistence } from '@/features';
 import { Canvas } from '@/widgets/canvas';
 
 export function SpacePage() {
@@ -16,16 +11,13 @@ export function SpacePage() {
 
   const graph = useGraphEditor();
 
-  const [graphHref, setGraphHref] = useState<string | null>(
-    null,
-  );
+  const [graphHref, setGraphHref] = useState<string | null>(null);
 
-  const [graphEtag, setGraphEtag] = useState<string | null>(
-    null,
-  );
+  const [graphEtag, setGraphEtag] = useState<string | null>(null);
+
+  const [generationHref, setGenerationHref] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState<string | null>(null);
 
   const persistence = useGraphPersistence({
@@ -37,6 +29,13 @@ export function SpacePage() {
     enabled: Boolean(graphHref && graphEtag),
   });
 
+  const generation = useGeneration({
+    nodes: graph.nodes,
+    edges: graph.edges,
+    saveNow: persistence.saveNow,
+    generationHref,
+    setResultImage: graph.setResultImage,
+  });
   useEffect(() => {
     if (!spaceId) {
       return;
@@ -49,13 +48,9 @@ export function SpacePage() {
         setLoading(true);
         setError(null);
 
-        const space = await getSpace(
-          `/api/spaces/${spaceId}`,
-        );
+        const space = await getSpace(`/api/spaces/${spaceId}`);
 
-        const graphResponse = await getGraph(
-          space.links.graph.href,
-        );
+        const graphResponse = await getGraph(space.links.graph.href);
 
         if (cancelled) {
           return;
@@ -68,17 +63,16 @@ export function SpacePage() {
         );
 
         setGraphHref(space.links.saveGraph.href);
+
         setGraphEtag(graphResponse.etag);
+
+        setGenerationHref(space.links.createGeneration.href);
       } catch (error) {
         if (cancelled) {
           return;
         }
 
-        setError(
-          error instanceof Error
-            ? error.message
-            : 'Failed to load space',
-        );
+        setError(error instanceof Error ? error.message : 'Failed to load space');
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -117,13 +111,17 @@ export function SpacePage() {
         onAddNode={graph.addNode}
         onUpdateNodeData={graph.updateNodeData}
         onViewportChange={graph.handleViewportChange}
+        onGenerate={generation.generate}
       />
 
       <div className="pointer-events-none absolute right-4 top-4 z-10">
         <div className="rounded-md bg-white px-3 py-2 text-sm shadow-sm">
           {persistence.status === 'idle' && 'Ready'}
+
           {persistence.status === 'saving' && 'Saving...'}
+
           {persistence.status === 'saved' && 'Saved'}
+
           {persistence.status === 'error' && 'Save failed'}
         </div>
 

@@ -6,6 +6,7 @@ export {
 export {
   canConnect,
   findResultNode,
+  findPromptNode,
   removeNode,
   toCanvasEdges,
   toCanvasNodes,

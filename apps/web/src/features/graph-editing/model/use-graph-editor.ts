@@ -77,7 +77,23 @@ export function useGraphEditor() {
     },
     [],
   );
+  const setResultImage = useCallback((nodeId: string, imageUrl: string) => {
+    setNodes((currentNodes) =>
+      currentNodes.map((node) => {
+        if (node.id !== nodeId || node.type !== 'result') {
+          return node;
+        }
 
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            imageUrl,
+          },
+        };
+      }),
+    );
+  }, []);
   const addNode = useCallback(
     (type: CanvasNode['type']) => {
       const id = crypto.randomUUID();
@@ -121,6 +137,7 @@ export function useGraphEditor() {
     setGraph,
     addNode,
     updateNodeData,
+    setResultImage,
     viewport,
     handleNodesChange,
     handleEdgesChange,

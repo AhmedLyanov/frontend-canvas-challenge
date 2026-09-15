@@ -91,3 +91,23 @@ export function findResultNode(
 
   return undefined;
 }
+
+export function findPromptNode(
+  nodes: CanvasNode[],
+  edges: CanvasEdge[],
+  generatorId: string,
+): CanvasNode | undefined {
+  for (const edge of edges) {
+    if (edge.target !== generatorId) {
+      continue;
+    }
+
+    const source = getNode(nodes, edge.source);
+
+    if (source?.type === "prompt") {
+      return source;
+    }
+  }
+
+  return undefined;
+}

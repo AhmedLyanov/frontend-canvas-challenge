@@ -14,6 +14,7 @@ export type CanvasNodeData =
     }
   | {
       label: string;
+      imageUrl?: string | null;
     };
 
 export type CanvasNode = ReactFlowNode<

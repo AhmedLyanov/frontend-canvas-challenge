@@ -3,14 +3,10 @@ import {
   Position,
   type NodeProps,
 } from "@xyflow/react";
+import { resolveApiUrl } from "@/shared/api/client";
+import type { CanvasNode } from "@/entities/graph";
 
-import type {
-  CanvasNode,
-} from "@/entities/graph";
-
-export function ResultNode({
-  data,
-}: NodeProps<CanvasNode>) {
+export function ResultNode({ data }: NodeProps<CanvasNode>) {
   if (!("label" in data)) {
     throw new Error("Result node has invalid data");
   }
@@ -27,9 +23,17 @@ export function ResultNode({
         {data.label}
       </div>
 
-      <div className="mt-1 text-sm text-gray-500">
-        Generated image
-      </div>
+      {data.imageUrl ? (
+        <img
+          src={resolveApiUrl(data.imageUrl)}
+          alt="Generated result"
+          className="mt-3 w-full rounded-md object-cover"
+        />
+      ) : (
+        <div className="mt-1 text-sm text-gray-500">
+          Generated image
+        </div>
+      )}
     </div>
   );
 }

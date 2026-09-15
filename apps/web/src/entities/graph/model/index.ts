@@ -1,5 +1,6 @@
 export {
   canConnect,
+  findPromptNode,
   findResultNode,
   removeNode,
 } from "./graph-utils";

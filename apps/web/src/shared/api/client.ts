@@ -84,3 +84,7 @@ export async function api<T>(
 
   return data;
 }
+
+export function resolveApiUrl(path: string): string {
+  return new URL(path, import.meta.env.VITE_API_URL).toString();
+}

@@ -58,14 +58,10 @@ export function useGraphPersistence({
   const revisionRef = useRef(0);
   const savedRevisionRef = useRef(0);
 
-  const saveChainRef = useRef(
-    Promise.resolve(),
-  );
+  const saveChainRef = useRef<
+    Promise<string | undefined>
+  >(Promise.resolve(undefined));
 
-  /**
-   * Первый effect после загрузки существующего графа
-   * не должен считаться изменением.
-   */
   const initializedRef = useRef(false);
 
   useEffect(() => {
@@ -103,9 +99,7 @@ export function useGraphPersistence({
 
       saveChainRef.current =
         saveChainRef.current.then(async () => {
-          if (
-            savedRevisionRef.current >= revision
-          ) {
+          if (savedRevisionRef.current >= revision) {
             return;
           }
 
@@ -116,8 +110,7 @@ export function useGraphPersistence({
             return;
           }
 
-          const graph =
-            latestGraphRef.current;
+          const graph = latestGraphRef.current;
 
           setStatus('saving');
           setError(null);
@@ -146,12 +139,7 @@ export function useGraphPersistence({
           }
         });
     }, 500);
-  }, [
-    nodes,
-    edges,
-    viewport,
-    enabled,
-  ]);
+  }, [nodes, edges, viewport, enabled]);
 
   useEffect(() => {
     return () => {
@@ -161,60 +149,65 @@ export function useGraphPersistence({
     };
   }, []);
 
-  const saveNow = useCallback(async () => {
-    if (!enabled) {
-      return;
-    }
+  const saveNow = useCallback(
+    async (): Promise<string | undefined> => {
+      if (!enabled) {
+        return undefined;
+      }
 
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
 
-    revisionRef.current += 1;
+      revisionRef.current += 1;
 
-    const revision = revisionRef.current;
+      const revision = revisionRef.current;
 
-    saveChainRef.current =
-      saveChainRef.current.then(async () => {
-        const currentHref = hrefRef.current;
-        const currentEtag = etagRef.current;
+      saveChainRef.current =
+        saveChainRef.current.then(async () => {
+          const currentHref = hrefRef.current;
+          const currentEtag = etagRef.current;
 
-        if (!currentHref || !currentEtag) {
-          return;
-        }
+          if (!currentHref || !currentEtag) {
+            return undefined;
+          }
 
-        setStatus('saving');
-        setError(null);
+          setStatus('saving');
+          setError(null);
 
-        try {
-          const response =
-            await saveGraph(
-              currentHref,
-              latestGraphRef.current,
-              currentEtag,
+          try {
+            const response =
+              await saveGraph(
+                currentHref,
+                latestGraphRef.current,
+                currentEtag,
+              );
+
+            etagRef.current = response.etag;
+
+            savedRevisionRef.current = revision;
+
+            setStatus('saved');
+
+            return response.etag;
+          } catch (error) {
+            setStatus('error');
+
+            setError(
+              error instanceof Error
+                ? error.message
+                : 'Failed to save graph',
             );
 
-          etagRef.current = response.etag;
+            throw error;
+          }
+        });
 
-          savedRevisionRef.current = revision;
-
-          setStatus('saved');
-        } catch (error) {
-          setStatus('error');
-
-          setError(
-            error instanceof Error
-              ? error.message
-              : 'Failed to save graph',
-          );
-
-          throw error;
-        }
-      });
-
-    await saveChainRef.current;
-  }, [enabled]);
+      return saveChainRef.current;
+    },
+    [enabled],
+  );
 
   return {
     status,
