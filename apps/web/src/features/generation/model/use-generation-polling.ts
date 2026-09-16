@@ -6,6 +6,7 @@ import { getGeneration } from '@/entities/generation/api';
 export interface UseGenerationPollingProps {
   onSucceeded: (generation: GenerationData) => void;
   onFailed: (generation: GenerationData) => void;
+  pollIntervalMs?: number;
 }
 
 interface PollingState {
@@ -14,38 +15,56 @@ interface PollingState {
   error: string | null;
 }
 
-const POLL_INTERVAL_MS = 1500;
+const DEFAULT_POLL_INTERVAL_MS = 1500;
 
-export function useGenerationPolling({ onSucceeded, onFailed }: UseGenerationPollingProps) {
+export function useGenerationPolling({
+  onSucceeded,
+  onFailed,
+  pollIntervalMs = DEFAULT_POLL_INTERVAL_MS,
+}: UseGenerationPollingProps) {
   const [state, setState] = useState<PollingState>({
     status: 'idle',
     generation: null,
     error: null,
   });
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeGenerationIdRef = useRef<string | null>(null);
+  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
-  const generationIdRef = useRef<string | null>(null);
+  const stop = useCallback((generationId?: string) => {
+    if (generationId) {
+      const timer = timersRef.current.get(generationId);
 
-  const stop = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
+      if (timer) {
+        clearTimeout(timer);
+        timersRef.current.delete(generationId);
+      }
+
+      if (activeGenerationIdRef.current === generationId) {
+        activeGenerationIdRef.current = null;
+      }
+
+      return;
     }
 
-    generationIdRef.current = null;
+    for (const timer of timersRef.current.values()) {
+      clearTimeout(timer);
+    }
+
+    timersRef.current.clear();
+    activeGenerationIdRef.current = null;
   }, []);
 
   const poll = useCallback(
-    async (href: string, generationId: string) => {
-      if (generationIdRef.current !== generationId) {
+    async function poll(href: string, generationId: string) {
+      if (!timersRef.current.has(generationId)) {
         return;
       }
 
       try {
         const generation = await getGeneration(href);
 
-        if (generationIdRef.current !== generationId) {
+        if (!timersRef.current.has(generationId)) {
           return;
         }
 
@@ -55,10 +74,8 @@ export function useGenerationPolling({ onSucceeded, onFailed }: UseGenerationPol
             generation,
             error: null,
           });
-
+          timersRef.current.delete(generationId);
           onSucceeded(generation);
-          stop();
-
           return;
         }
 
@@ -66,12 +83,10 @@ export function useGenerationPolling({ onSucceeded, onFailed }: UseGenerationPol
           setState({
             status: 'failed',
             generation,
-            error: generation.failureCode,
+            error: generation.failureCode ?? 'Generation failed',
           });
-
+          timersRef.current.delete(generationId);
           onFailed(generation);
-          stop();
-
           return;
         }
 
@@ -81,36 +96,41 @@ export function useGenerationPolling({ onSucceeded, onFailed }: UseGenerationPol
           error: null,
         });
 
-        timerRef.current = setTimeout(() => {
-          timerRef.current = null;
-
+        const timer = setTimeout(() => {
+          timersRef.current.delete(generationId);
           void poll(href, generationId);
-        }, POLL_INTERVAL_MS);
+        }, pollIntervalMs);
+
+        timersRef.current.set(generationId, timer);
       } catch (error) {
-        if (generationIdRef.current !== generationId) {
+        if (!timersRef.current.has(generationId)) {
           return;
         }
 
+        const message = error instanceof Error ? error.message : 'Generation status request failed';
         setState((current) => ({
           ...current,
-          error: error instanceof Error ? error.message : 'Generation status request failed',
+          error: message,
         }));
 
-        timerRef.current = setTimeout(() => {
-          timerRef.current = null;
-
+        const timer = setTimeout(() => {
+          timersRef.current.delete(generationId);
           void poll(href, generationId);
-        }, POLL_INTERVAL_MS);
+        }, pollIntervalMs);
+
+        timersRef.current.set(generationId, timer);
       }
     },
-    [onFailed, onSucceeded, stop],
+    [onFailed, onSucceeded, pollIntervalMs],
   );
 
   const start = useCallback(
     (href: string, generationId: string, initialDelay = 0) => {
-      stop();
+      activeGenerationIdRef.current = generationId;
 
-      generationIdRef.current = generationId;
+      if (timersRef.current.has(generationId)) {
+        clearTimeout(timersRef.current.get(generationId));
+      }
 
       setState({
         status: 'processing',
@@ -118,13 +138,17 @@ export function useGenerationPolling({ onSucceeded, onFailed }: UseGenerationPol
         error: null,
       });
 
-      timerRef.current = setTimeout(() => {
-        timerRef.current = null;
+      const timer = setTimeout(
+        () => {
+          timersRef.current.delete(generationId);
+          void poll(href, generationId);
+        },
+        initialDelay > 0 ? initialDelay : 0,
+      );
 
-        void poll(href, generationId);
-      }, initialDelay);
+      timersRef.current.set(generationId, timer);
     },
-    [poll, stop],
+    [poll],
   );
 
   useEffect(() => {

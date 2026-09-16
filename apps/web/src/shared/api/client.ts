@@ -1,4 +1,4 @@
-import type { ErrorResponseData } from '@canvas/contracts';
+import type { ConfigData, ErrorResponseData } from '@canvas/contracts';
 
 import { ApiError } from './errors';
 
@@ -76,4 +76,8 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
 
 export function resolveApiUrl(path: string): string {
   return new URL(path, import.meta.env.VITE_API_URL).toString();
+}
+
+export async function getConfig(): Promise<ConfigData> {
+  return api<ConfigData>('/api/config');
 }

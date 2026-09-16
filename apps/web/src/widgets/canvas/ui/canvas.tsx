@@ -34,7 +34,7 @@ export interface CanvasProps {
   onUpdateNodeData: (nodeId: string, data: CanvasNode['data']) => void;
   onViewportChange: (viewport: Viewport) => void;
 
-  onGenerate: (generatorId: string) => void;
+  onGenerate: (generatorId: string, scenario?: 'success' | 'failure') => void;
 }
 
 export function Canvas({

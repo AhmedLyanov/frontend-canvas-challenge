@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import type { GenerationData } from '@canvas/contracts';
 
@@ -17,6 +17,7 @@ interface UseGenerationProps {
   saveNow: () => Promise<string | undefined>;
   generationHref: string | null;
   setResultImage: (nodeId: string, imageUrl: string) => void;
+  pollIntervalMs?: number;
 }
 
 export function useGeneration({
@@ -25,7 +26,18 @@ export function useGeneration({
   saveNow,
   generationHref,
   setResultImage,
+  pollIntervalMs,
 }: UseGenerationProps) {
+  const attemptsRef = useRef<
+    Map<
+      string,
+      {
+        idempotencyKey: string;
+        scenario: 'success' | 'failure';
+      }
+    >
+  >(new Map());
+
   const handleSucceeded = useCallback(
     (generation: GenerationData) => {
       if (!generation.imageUrl) {
@@ -40,6 +52,8 @@ export function useGeneration({
     [setResultImage],
   );
 
+  const handleFailed = useCallback(() => {}, []);
+
   const {
     generation,
     status,
@@ -48,13 +62,18 @@ export function useGeneration({
     stop: stopPolling,
   } = useGenerationPolling({
     onSucceeded: handleSucceeded,
-    onFailed: () => {},
+    onFailed: handleFailed,
+    pollIntervalMs,
   });
 
   const generate = useCallback(
-    async (generatorId: string) => {
+    async (
+      generatorId: string,
+      scenario: 'success' | 'failure' = 'success',
+      providedKey?: string,
+    ) => {
       if (!generationHref) {
-        return;
+        return undefined;
       }
 
       const promptNode = findPromptNode(
@@ -70,33 +89,39 @@ export function useGeneration({
       );
 
       if (!promptNode || !resultNode) {
-        return;
+        return undefined;
       }
 
       if (!('text' in promptNode.data)) {
-        return;
+        return undefined;
       }
 
       const prompt = promptNode.data.text.trim();
 
       if (!prompt) {
-        return;
+        return undefined;
       }
 
       const graphETag = await saveNow();
 
       if (!graphETag) {
-        return;
+        return undefined;
       }
 
-      const idempotencyKey = crypto.randomUUID();
+      const idempotencyKey =
+        providedKey ?? crypto.randomUUID();
+
+      attemptsRef.current.set(generatorId, {
+        idempotencyKey,
+        scenario,
+      });
 
       const response = await createGeneration(
         generationHref,
         {
           nodeId: generatorId,
           graphETag,
-          scenario: 'success',
+          scenario,
         },
         idempotencyKey,
       );
@@ -104,7 +129,12 @@ export function useGeneration({
       startPolling(
         response.generation.links.self.href,
         response.generation.id,
+        response.retryAfter
+          ? response.retryAfter * 1000
+          : 0,
       );
+
+      return response;
     },
     [
       nodes,
@@ -113,6 +143,24 @@ export function useGeneration({
       generationHref,
       startPolling,
     ],
+  );
+
+  const retryGeneration = useCallback(
+    (generatorId: string) => {
+      const attempt =
+        attemptsRef.current.get(generatorId);
+
+      if (!attempt) {
+        return generate(generatorId, 'success');
+      }
+
+      return generate(
+        generatorId,
+        attempt.scenario,
+        attempt.idempotencyKey,
+      );
+    },
+    [generate],
   );
 
   const restoreGeneration = useCallback(
@@ -132,6 +180,7 @@ export function useGeneration({
         startPolling(
           item.links.self.href,
           item.id,
+          0,
         );
 
         return;
@@ -141,10 +190,7 @@ export function useGeneration({
         return;
       }
     },
-    [
-      setResultImage,
-      startPolling,
-    ],
+    [setResultImage, startPolling],
   );
 
   const restoreGenerations = useCallback(
@@ -172,6 +218,7 @@ export function useGeneration({
 
   return {
     generate,
+    retryGeneration,
     restoreGeneration,
     restoreGenerations,
     generation,

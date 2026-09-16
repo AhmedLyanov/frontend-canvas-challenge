@@ -4,7 +4,7 @@ import type { CanvasNode } from '@/entities/graph';
 
 interface CanvasContextValue {
   updateNodeData: (nodeId: string, data: CanvasNode['data']) => void;
-  generate: (generatorId: string) => void;
+  generate: (generatorId: string, scenario?: 'success' | 'failure') => void;
 }
 
 const CanvasContext = createContext<CanvasContextValue | null>(null);
